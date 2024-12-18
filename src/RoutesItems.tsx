@@ -6,7 +6,7 @@ export const RoutesItems = () => {
     <BrowserRouter basename="/calendar">
       <Routes>
         <Route path="/:id" element={<Calendario />} />
-        <Route path="/" element={<Navigate to="/calendario/:id" replace />} />
+        <Route path="/" element={<Navigate to="/:id" replace />} />
       </Routes>
     </BrowserRouter>
   );
