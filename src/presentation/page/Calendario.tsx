@@ -5,7 +5,20 @@ import { useParams } from "react-router";
 import { Payments } from "../../use-case/payments";
 import { useState, useEffect, useMemo } from "react";
 
+
+
 import "font-awesome/css/font-awesome.min.css";
+
+// Componente de toolbar personalizado
+const CustomToolbar = ({ date = new Date() }) => {
+  const label = localizer.format(date, 'MMMM YYYY') || 'Fecha no disponible';
+
+  return (
+    <div style={{ textAlign: 'center', fontSize: '3em', fontWeight: 'bold', marginBottom: '20px' }}>
+      {label}
+    </div>
+  );
+};
 
 const localizer = momentLocalizer(moment);
 
@@ -145,7 +158,7 @@ export const Calendario = () => {
     return <div>Cargando...</div>;
   }
 
-  const startDateMinusTwo = moment(startDate).subtract(2, "days").toDate();
+  const startDateMinusTwo = moment(startDate).subtract(0, "days").toDate();
 
   // dayPropGetter: además de la lógica actual, si la fecha está en existingDates
   // y no es start/end/outOfRange, la pintamos de celeste (#e0f7fa).
@@ -219,12 +232,13 @@ export const Calendario = () => {
         events={[]}
         startAccessor="start"
         endAccessor="end"
-        style={{ height: 500 }}
+        style={{ height: 700 }}
         date={viewDate}
-        toolbar={false}
+        toolbar={true}
         view="month"
         dayPropGetter={dayPropGetter}
         components={{
+          toolbar: CustomToolbar,
           month: {
             dateHeader: ({ label, date }) => {
               const dateStr = getDateKey(date);
@@ -334,7 +348,12 @@ export const Calendario = () => {
           })}
         </ul>
       </div>
-      <button onClick={handleUpdatePayments}>Update Date Ads</button>
+      <button
+          onClick={handleUpdatePayments}
+          className="btn btn-primary"
+        >
+          Update Date Ads
+        </button>
     </div>
   );
 };
