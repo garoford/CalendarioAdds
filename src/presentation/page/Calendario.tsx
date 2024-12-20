@@ -1,4 +1,3 @@
-
 import { Calendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
@@ -6,6 +5,8 @@ import { useParams } from "react-router";
 import { Payments } from "../../use-case/payments";
 import { useState, useEffect, useMemo } from "react";
 import { IEvent } from "../../domain/event.type";
+import 'font-awesome/css/font-awesome.min.css';
+
 
 const localizer = momentLocalizer(moment);
 
@@ -129,10 +130,7 @@ export const Calendario = () => {
 
   const startDateMinusTwo = moment(startDate).subtract(2, 'days').toDate();
 
-  // dayPropGetter: 
-  // - Start/End date: rojo
-  // - Fuera de rango: gris
-  // - Resto: blanco
+  // Estilo de fondo de la celda
   const dayPropGetter = (date: Date) => {
     const isStart = sameDay(date, startDate);
     const isEnd = sameDay(date, endDate);
@@ -149,8 +147,43 @@ export const Calendario = () => {
     return { style: { backgroundColor } };
   };
 
+  // Funciones para navegar entre meses manualmente
+  const handlePrevMonth = () => {
+    if (viewDate) {
+      const prevMonth = moment(viewDate).subtract(1, 'month').toDate();
+      setViewDate(prevMonth);
+    }
+  };
+
+  const handleNextMonth = () => {
+    if (viewDate) {
+      const nextMonth = moment(viewDate).add(1, 'month').toDate();
+      setViewDate(nextMonth);
+    }
+  };
+
+  // Estilos para los botones con iconos Font Awesome
+  const buttonStyle: IMyStyle = {
+    position: 'absolute',
+    top: '300px',
+    width: '50px',
+    height: '50px',
+    borderRadius: '50%',
+    backgroundColor: 'white',
+    border: '2px solid #333',
+    fontWeight: 'bold',
+    cursor: 'pointer',
+    zIndex: 999,
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    fontSize: '20px',
+    boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+    transition: 'all 0.3s ease',
+  };
+
   return (
-    <div>
+    <div style={{ position: 'relative' }}>
       <Calendar
         localizer={localizer}
         events={events}
@@ -158,9 +191,8 @@ export const Calendario = () => {
         endAccessor="end"
         style={{ height: 500 }}
         date={viewDate}
-        onNavigate={(newDate) => setViewDate(newDate)}
+        toolbar={false}
         view="month"
-        onView={() => {}}
         dayPropGetter={dayPropGetter}
         components={{
           month: {
@@ -193,7 +225,6 @@ export const Calendario = () => {
                 color: textColor
               };
 
-              // canSelect = true solo si no es start/end ni está fuera de rango
               const canSelect = !isStart && !isEnd && !outOfRange;
 
               return (
@@ -209,14 +240,34 @@ export const Calendario = () => {
                       </button>
                     </div>
                   )}
-                  {count > 0 && <div style={{ fontSize: "0.8em" }}>Count: {count}</div>}
                 </div>
               );
             }
           }
         }}
       />
-      <div>
+
+      {/* Botón para ir al mes anterior */}
+      <button
+        onClick={handlePrevMonth}
+        style={{ ...buttonStyle, left: '10px' }}
+        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f0f0f0')}
+        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'white')}
+      >
+        <i className="fa fa-chevron-left"></i>
+      </button>
+
+      {/* Botón para ir al mes siguiente */}
+      <button
+        onClick={handleNextMonth}
+        style={{ ...buttonStyle, right: '10px' }}
+        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f0f0f0')}
+        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'white')}
+      >
+        <i className="fa fa-chevron-right"></i>
+      </button>
+
+      <div style={{ marginTop: '20px' }}>
         <h3>Fechas seleccionadas:</h3>
         <ul>
           {formatDates(datesCount).map((dateStr, index) => (
