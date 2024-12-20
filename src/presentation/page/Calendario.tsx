@@ -68,8 +68,17 @@ export const Calendario = () => {
   }, [datesCount]);
 
   const handleAddSelection = (date: Date) => {
+    if (!startDate || !endDate) return; // Aseguramos que existan startDate/endDate
+
+    const startDateMinusTwo = moment(startDate).subtract(2, 'days').toDate();
+    // Verificar si está dentro del rango permitido
+    if (date < startDateMinusTwo || date > endDate) {
+      return; // No se puede seleccionar fuera de rango
+    }
+
+    // Verificar si es StartDate o EndDate
     if ((startDate && sameDay(date, startDate)) || (endDate && sameDay(date, endDate))) {
-      return;
+      return; 
     }
 
     if (totalSelections >= maxSelections) {
@@ -117,21 +126,26 @@ export const Calendario = () => {
     alert("Fechas actualizadas con éxito!");
   };
 
-  if (!viewDate) {
+  if (!viewDate || !startDate || !endDate) {
     return <div>Cargando...</div>;
   }
 
-  // dayPropGetter se utiliza para establecer el estilo de todo el día (celda completa)
+  const startDateMinusTwo = moment(startDate).subtract(2, 'days').toDate();
+
+  // dayPropGetter para el fondo
   const dayPropGetter = (date: Date) => {
-    const isStart = startDate && sameDay(date, startDate);
-    const isEnd = endDate && sameDay(date, endDate);
+    const isStart = sameDay(date, startDate);
+    const isEnd = sameDay(date, endDate);
     const isCurrentMonth = 
       date.getMonth() === viewDate.getMonth() && date.getFullYear() === viewDate.getFullYear();
+
+    // Fechas fuera de rango: antes de (startDate-2) o después de endDate
+    const outOfRange = date < startDateMinusTwo || date > endDate;
 
     let backgroundColor = "white";
     if (isStart || isEnd) {
       backgroundColor = "red";
-    } else if (!isCurrentMonth) {
+    } else if (!isCurrentMonth || outOfRange) {
       backgroundColor = "#dddddd"; 
     }
 
@@ -152,18 +166,19 @@ export const Calendario = () => {
         onNavigate={(newDate) => setViewDate(newDate)}
         view="month"
         onView={() => {}}
-        dayPropGetter={dayPropGetter} // Aquí aplicamos el fondo a la celda entera
+        dayPropGetter={dayPropGetter}
         components={{
           month: {
             dateHeader: ({ label, date }) => {
               const dateStr = getDateKey(date);
               const count = datesCount[dateStr] || 0;
-              const isStart = startDate && sameDay(date, startDate);
-              const isEnd = endDate && sameDay(date, endDate);
+              const isStart = sameDay(date, startDate);
+              const isEnd = sameDay(date, endDate);
               const isCurrentMonth = 
                 date.getMonth() === viewDate.getMonth() && date.getFullYear() === viewDate.getFullYear();
+              
+              const outOfRange = date < startDateMinusTwo || date > endDate;
 
-              // Aquí solo manejamos el texto y el color del texto, NO el fondo
               let textColor = "black";
               let content = label;
 
@@ -173,7 +188,8 @@ export const Calendario = () => {
               } else if (isEnd) {
                 textColor = "white";
                 content = "End Date";
-              } else if (!isCurrentMonth) {
+              } else if (!isCurrentMonth || outOfRange) {
+                // Mismo tratamiento que fuera de mes
                 textColor = "#555555";
               }
 
@@ -187,10 +203,13 @@ export const Calendario = () => {
                 color: textColor
               };
 
+              // Si la fecha es seleccionable (no outOfRange, no start/end y es del mes actual)
+              const canSelect = isCurrentMonth && !isStart && !isEnd && !outOfRange;
+
               return (
                 <div style={style}>
                   {content}
-                  {!isStart && !isEnd && isCurrentMonth && (
+                  {canSelect && (
                     <div style={{ display: "flex", gap: "5px", marginTop: "5px" }}>
                       <button onClick={() => handleRemoveSelection(date)} disabled={count === 0}>
                         –
