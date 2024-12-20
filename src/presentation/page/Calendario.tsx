@@ -18,9 +18,6 @@ export const Calendario = () => {
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [datesCount, setDatesCount] = useState<{ [dateStr: string]: number }>({});
-
-  // Antes: useState(new Date())
-  // Ahora: inicia en null y cuando tengamos startDate la actualizamos.
   const [viewDate, setViewDate] = useState<Date | null>(null);
 
   useEffect(() => {
@@ -32,9 +29,7 @@ export const Calendario = () => {
       setStartDate(startD);
       setEndDate(endD);
       setMaxSelections(data.contador);
-
-      // Una vez que tengamos startDate, establecemos viewDate en startDate.
-      setViewDate(startD);
+      setViewDate(startD); 
     };
 
     getDate();
@@ -122,77 +117,96 @@ export const Calendario = () => {
     alert("Fechas actualizadas con éxito!");
   };
 
+  if (!viewDate) {
+    return <div>Cargando...</div>;
+  }
+
+  // dayPropGetter se utiliza para establecer el estilo de todo el día (celda completa)
+  const dayPropGetter = (date: Date) => {
+    const isStart = startDate && sameDay(date, startDate);
+    const isEnd = endDate && sameDay(date, endDate);
+    const isCurrentMonth = 
+      date.getMonth() === viewDate.getMonth() && date.getFullYear() === viewDate.getFullYear();
+
+    let backgroundColor = "white";
+    if (isStart || isEnd) {
+      backgroundColor = "red";
+    } else if (!isCurrentMonth) {
+      backgroundColor = "#dddddd"; 
+    }
+
+    return {
+      style: { backgroundColor }
+    };
+  };
+
   return (
     <div>
-      {viewDate && (
-        <Calendar
-          localizer={localizer}
-          events={events}
-          startAccessor="start"
-          endAccessor="end"
-          style={{ height: 500 }}
-          date={viewDate} // Establece el mes a mostrar basado en startDate
-          onNavigate={(newDate) => setViewDate(newDate)}
-          view="month"
-          onView={() => {}}
-          components={{
-            month: {
-              dateHeader: ({ label, date }) => {
-                const dateStr = getDateKey(date);
-                const count = datesCount[dateStr] || 0;
-                const isStart = startDate && sameDay(date, startDate);
-                const isEnd = endDate && sameDay(date, endDate);
+      <Calendar
+        localizer={localizer}
+        events={events}
+        startAccessor="start"
+        endAccessor="end"
+        style={{ height: 500 }}
+        date={viewDate}
+        onNavigate={(newDate) => setViewDate(newDate)}
+        view="month"
+        onView={() => {}}
+        dayPropGetter={dayPropGetter} // Aquí aplicamos el fondo a la celda entera
+        components={{
+          month: {
+            dateHeader: ({ label, date }) => {
+              const dateStr = getDateKey(date);
+              const count = datesCount[dateStr] || 0;
+              const isStart = startDate && sameDay(date, startDate);
+              const isEnd = endDate && sameDay(date, endDate);
+              const isCurrentMonth = 
+                date.getMonth() === viewDate.getMonth() && date.getFullYear() === viewDate.getFullYear();
 
-                let backgroundColor = "white";
-                let textColor = "black";
-                let content = label;
+              // Aquí solo manejamos el texto y el color del texto, NO el fondo
+              let textColor = "black";
+              let content = label;
 
-                if (isStart) {
-                  backgroundColor = "red";
-                  textColor = "white";
-                  content = "Start Date";
-                } else if (isEnd) {
-                  backgroundColor = "red";
-                  textColor = "white";
-                  content = "End Date";
-                }
-
-                const style: IMyStyle = {
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  height: "100%",
-                  fontWeight: "bold",
-                  backgroundColor,
-                  color: textColor
-                };
-
-                // Checkea si pertenece al mes actual
-                const isCurrentMonth = 
-                  date.getMonth() === viewDate.getMonth() && date.getFullYear() === viewDate.getFullYear();
-
-                return (
-                  <div style={style}>
-                    {content}
-                    {!isStart && !isEnd && isCurrentMonth && (
-                      <div style={{ display: "flex", gap: "5px", marginTop: "5px" }}>
-                        <button onClick={() => handleRemoveSelection(date)} disabled={count === 0}>
-                          –
-                        </button>
-                        <button onClick={() => handleAddSelection(date)}>
-                          +
-                        </button>
-                      </div>
-                    )}
-                    {count > 0 && <div style={{ fontSize: "0.8em" }}>Count: {count}</div>}
-                  </div>
-                );
+              if (isStart) {
+                textColor = "white";
+                content = "Start Date";
+              } else if (isEnd) {
+                textColor = "white";
+                content = "End Date";
+              } else if (!isCurrentMonth) {
+                textColor = "#555555";
               }
+
+              const style: IMyStyle = {
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                alignItems: "center",
+                height: "100%",
+                fontWeight: "bold",
+                color: textColor
+              };
+
+              return (
+                <div style={style}>
+                  {content}
+                  {!isStart && !isEnd && isCurrentMonth && (
+                    <div style={{ display: "flex", gap: "5px", marginTop: "5px" }}>
+                      <button onClick={() => handleRemoveSelection(date)} disabled={count === 0}>
+                        –
+                      </button>
+                      <button onClick={() => handleAddSelection(date)}>
+                        +
+                      </button>
+                    </div>
+                  )}
+                  {count > 0 && <div style={{ fontSize: "0.8em" }}>Count: {count}</div>}
+                </div>
+              );
             }
-          }}
-        />
-      )}
+          }
+        }}
+      />
       <div>
         <h3>Fechas seleccionadas:</h3>
         <ul>
