@@ -1,0 +1,14 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /calendar/
+
+# Permitir acceso directo a index.html
+
+RewriteRule ^index\.html$ - [L]
+
+# Redirigir todas las rutas a index.html
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /calendar/index.html [L]
+</IfModule>
