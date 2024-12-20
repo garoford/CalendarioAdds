@@ -7,7 +7,6 @@ import { useState, useEffect, useMemo } from "react";
 import { IEvent } from "../../domain/event.type";
 import 'font-awesome/css/font-awesome.min.css';
 
-
 const localizer = momentLocalizer(moment);
 
 interface IMyStyle {
@@ -26,8 +25,10 @@ export const Calendario = () => {
     const getDate = async () => {
       if (!id) return;
       const data = await Payments.getPayments(id);
-      const startD = new Date(data.calendario.dateStart);
-      const endD = new Date(data.calendario.dateEnd);
+
+      // Ajustamos las fechas para que empiecen a medianoche local
+      const startD = new Date(`${data.calendario.dateStart}T00:00:00`);
+      const endD = new Date(`${data.calendario.dateEnd}T00:00:00`);
 
       setStartDate(startD);
       setEndDate(endD);
@@ -74,7 +75,8 @@ export const Calendario = () => {
     const startDateMinusTwo = moment(startDate).subtract(2, 'days').toDate();
     if (date < startDateMinusTwo || date > endDate) return;
 
-    if ((startDate && sameDay(date, startDate)) || (endDate && sameDay(date, endDate))) {
+    // Start Date y End Date siguen sin permitir selección si son EndDate o fuera de rango, pero sí StartDate ahora.
+    if ((endDate && sameDay(date, endDate))) {
       return; 
     }
 
@@ -130,7 +132,6 @@ export const Calendario = () => {
 
   const startDateMinusTwo = moment(startDate).subtract(2, 'days').toDate();
 
-  // Estilo de fondo de la celda
   const dayPropGetter = (date: Date) => {
     const isStart = sameDay(date, startDate);
     const isEnd = sameDay(date, endDate);
@@ -147,7 +148,6 @@ export const Calendario = () => {
     return { style: { backgroundColor } };
   };
 
-  // Funciones para navegar entre meses manualmente
   const handlePrevMonth = () => {
     if (viewDate) {
       const prevMonth = moment(viewDate).subtract(1, 'month').toDate();
@@ -162,7 +162,6 @@ export const Calendario = () => {
     }
   };
 
-  // Estilos para los botones con iconos Font Awesome
   const buttonStyle: IMyStyle = {
     position: 'absolute',
     top: '300px',
@@ -206,7 +205,6 @@ export const Calendario = () => {
               let textColor = "black";
               let content = label;
 
-              // Start/End date con texto blanco
               if (isStart) {
                 textColor = "white";
                 content = "Start Date";
@@ -214,6 +212,9 @@ export const Calendario = () => {
                 textColor = "white";
                 content = "End Date";
               }
+
+              // Ahora permitimos selección también en StartDate
+              const canSelect = !isEnd && !outOfRange; 
 
               const style: IMyStyle = {
                 display: "flex",
@@ -224,8 +225,6 @@ export const Calendario = () => {
                 fontWeight: "bold",
                 color: textColor
               };
-
-              const canSelect = !isStart && !isEnd && !outOfRange;
 
               return (
                 <div style={style}>
@@ -247,7 +246,6 @@ export const Calendario = () => {
         }}
       />
 
-      {/* Botón para ir al mes anterior */}
       <button
         onClick={handlePrevMonth}
         style={{ ...buttonStyle, left: '10px' }}
@@ -257,7 +255,6 @@ export const Calendario = () => {
         <i className="fa fa-chevron-left"></i>
       </button>
 
-      {/* Botón para ir al mes siguiente */}
       <button
         onClick={handleNextMonth}
         style={{ ...buttonStyle, right: '10px' }}
