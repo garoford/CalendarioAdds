@@ -158,7 +158,7 @@ export const Calendario = () => {
     return <div>Cargando...</div>;
   }
 
-  const startDateMinusTwo = moment(startDate).subtract(0, "days").toDate();
+  const startDateMinusTwo = moment(startDate).subtract(1, "days").toDate();
 
   // dayPropGetter: además de la lógica actual, si la fecha está en existingDates
   // y no es start/end/outOfRange, la pintamos de celeste (#e0f7fa).
@@ -169,26 +169,28 @@ export const Calendario = () => {
     const dateKey = getDateKey(date);
     const isExisting = existingDates.has(dateKey);
 
-    let backgroundColor = "white";
+    let backgroundColor = ""; // En caso de que Julio se arrepienta le colocamos White
 
     if (isEnd) {
       // Prioridad 1: Start/End Date en rojo
       backgroundColor = "red";
     } else if (isStart) {
-      // Prioridad 3: Fecha existente en celeste
+      // Prioridad 2: Fecha inicial en verde
       backgroundColor = "green";
     } else if (isExisting) {
       // Prioridad 3: Fecha existente en celeste
       backgroundColor = "#e0f7fa";
     } else if (outOfRange) {
-      // Prioridad 2: Fuera de rango en gris
-      backgroundColor = "#dddddd";
+      // Prioridad 4: Fuera de rango en gris
+      backgroundColor = "#e6e6e6";
     }
 
     // Si no se cumple ninguna de las condiciones anteriores, queda en blanco (white)
 
     return { style: { backgroundColor } };
   };
+
+  const dayDifference = moment(endDate).diff(moment(startDate), 'days');
 
   const handlePrevMonth = () => {
     if (viewDate) {
@@ -227,87 +229,233 @@ export const Calendario = () => {
 
   return (
     <div style={{ position: "relative" }}>
-      <Calendar // para poder ver varias veces el mes, sacar de aqui el codigo
-        localizer={localizer}
-        events={[]}
-        startAccessor="start"
-        endAccessor="end"
-        style={{ height: 700 }}
-        date={viewDate}
-        toolbar={true}
-        view="month"
-        dayPropGetter={dayPropGetter}
-        components={{
-          toolbar: CustomToolbar,
-          month: {
-            dateHeader: ({ label, date }) => {
-              const dateStr = getDateKey(date);
-              const count = datesCount[dateStr] || 0;
-              const isStart = sameDay(date, startDate);
-              const isEnd = sameDay(date, endDate);
-              const outOfRange = date < startDateMinusTwo || date > endDate;
+      <div className="calendar-container">
+        <Calendar // para poder ver varias veces el mes, sacar de aqui el codigo
+          localizer={localizer}
+          events={[]}
+          startAccessor="start"
+          endAccessor="end"
+          style={{ height: 700, width: "33.33%" }}
+          date={viewDate}
+          toolbar={true}
+          view="month"
+          dayPropGetter={dayPropGetter}
+          components={{
+            toolbar: CustomToolbar,
+            month: {
+              dateHeader: ({ label, date }) => {
+                const dateStr = getDateKey(date);
+                const count = datesCount[dateStr] || 0;
+                const isStart = sameDay(date, startDate);
+                const isEnd = sameDay(date, endDate);
+                const outOfRange = date < startDateMinusTwo || date > endDate;
 
-              let textColor = "black";
-              let content = label;
+                let textColor = "black";
+                let content = label;
 
-              if (isStart) {
-                textColor = "white";
-                content = `Start Date - ${label}`;
-              } else if (isEnd) {
-                textColor = "white";
-                content = `End Date - ${label}`;
-              }
+                if (isStart) {
+                  textColor = "white";
+                  content = `SD - ${label}`;
+                } else if (isEnd) {
+                  textColor = "white";
+                  content = `ED - ${label}`;
+                }
 
-              // Permitimos selección en StartDate y demás fechas no fuera de rango ni endDate
-              const canSelect = !isEnd && !outOfRange;
+                // Permitimos selección en StartDate y demás fechas no fuera de rango ni endDate
+                const canSelect = !isEnd && !outOfRange;
 
-              const style: IMyStyle = {
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "center",
-                alignItems: "center",
-                height: "100%",
-                fontWeight: "bold",
-                color: textColor,
-              };
+                const style: IMyStyle = {
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  height: "100%",
+                  fontWeight: "bold",
+                  color: textColor,
+                };
 
-              return (
-                <div style={style}>
-                  {content}
-                  {canSelect && (
-                    <div
-                      style={{ display: "flex", gap: "5px", marginTop: "5px" }}
-                    >
-                      <button
-                        onClick={() => handleRemoveSelection(date)}
-                        disabled={count === 0}
+                return (
+                  <div style={style}>
+                    {content}
+                    {canSelect && (
+                      <div style={{ display: "flex", gap: "5px", marginTop: "5px" }}>
+                        <button onClick={() => handleRemoveSelection(date)} disabled={count === 0}>
+                          –
+                        </button>
+                        <button onClick={() => handleAddSelection(date)}>
+                          +
+                        </button>
+                      </div>
+                    )}
+                    {count > 0 && (
+                      <div
+                        style={{
+                          fontSize: count > 2 ? "2.5em" : "1.5em",
+                          color: "red",
+                          fontWeight: "bold",
+                        }}
                       >
-                        –
-                      </button>
-                      <button onClick={() => handleAddSelection(date)}>
-                        +
-                      </button>
-                    </div>
-                  )}
-                  {count > 0 && (
-                    <div
-                      style={{
-                        fontSize: "2em",
-                        color: "red",
-                        fontWeight: "bold",
-                      }}
-                    >
-                      {"❌ ".repeat(count).trim()}
-                    </div>
-                  )}
-                </div>
-              );
+                        {count > 2 ? count : "❌ ".repeat(count).trim()}
+                      </div>
+                    )}
+                  </div>
+                );
+              },
             },
-          },
-        }}
-      />
+          }}
+        />
+        <Calendar // para poder ver varias veces el mes, sacar de aqui el codigo
+          localizer={localizer}
+          events={[]}
+          startAccessor="start"
+          endAccessor="end"
+          style={{ height: 700, width: "33.33%" }}
+          date={moment(viewDate).add(1, 'month').toDate()}
+          toolbar={true}
+          view="month"
+          dayPropGetter={dayPropGetter}
+          components={{
+            toolbar: CustomToolbar,
+            month: {
+              dateHeader: ({ label, date }) => {
+                const dateStr = getDateKey(date);
+                const count = datesCount[dateStr] || 0;
+                const isStart = sameDay(date, startDate);
+                const isEnd = sameDay(date, endDate);
+                const outOfRange = date < startDateMinusTwo || date > endDate;
 
-      
+                let textColor = "black";
+                let content = label;
+
+                if (isStart) {
+                  textColor = "white";
+                  content = `SD - ${label}`;
+                } else if (isEnd) {
+                  textColor = "white";
+                  content = `ED - ${label}`;
+                }
+
+                // Permitimos selección en StartDate y demás fechas no fuera de rango ni endDate
+                const canSelect = !isEnd && !outOfRange;
+
+                const style: IMyStyle = {
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  height: "100%",
+                  fontWeight: "bold",
+                  color: textColor,
+                };
+
+                return (
+                  <div style={style}>
+                    {content}
+                    {canSelect && (
+                      <div style={{ display: "flex", gap: "5px", marginTop: "5px" }}>
+                        <button onClick={() => handleRemoveSelection(date)} disabled={count === 0}>
+                          –
+                        </button>
+                        <button onClick={() => handleAddSelection(date)}>
+                          +
+                        </button>
+                      </div>
+                    )}
+                    {count > 0 && (
+                      <div
+                        style={{
+                          fontSize: count > 2 ? "2.5em" : "1.5em",
+                          color: "red",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        {count > 2 ? count : "❌ ".repeat(count).trim()}
+                      </div>
+                    )}
+                  </div>
+                );
+              },
+            },
+          }}
+        />
+        {dayDifference > 31 && (
+          <Calendar
+            localizer={localizer}
+            events={[]}
+            startAccessor="start"
+            endAccessor="end"
+            style={{ height: 700, width: "33.33%" }}
+            date={moment(viewDate).add(2, 'month').toDate()}
+            toolbar={true}
+            view="month"
+            dayPropGetter={dayPropGetter}
+            components={{
+              toolbar: CustomToolbar,
+              month: {
+                dateHeader: ({ label, date }) => {
+                  const dateStr = getDateKey(date);
+                  const count = datesCount[dateStr] || 0;
+                  const isStart = sameDay(date, startDate);
+                  const isEnd = sameDay(date, endDate);
+                  const outOfRange = date < startDateMinusTwo || date > endDate;
+
+                  let textColor = "black";
+                  let content = label;
+
+                  if (isStart) {
+                    textColor = "white";
+                    content = `SD - ${label}`;
+                  } else if (isEnd) {
+                    textColor = "white";
+                    content = `ED - ${label}`;
+                  }
+
+                  const canSelect = !isEnd && !outOfRange;
+
+                  const style: IMyStyle = {
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    height: "100%",
+                    fontWeight: "bold",
+                    color: textColor,
+                  };
+
+                  return (
+                    <div style={style}>
+                      {content}
+                      {canSelect && (
+                        <div style={{ display: "flex", gap: "5px", marginTop: "5px" }}>
+                          <button onClick={() => handleRemoveSelection(date)} disabled={count === 0}>
+                            –
+                          </button>
+                          <button onClick={() => handleAddSelection(date)}>
+                            +
+                          </button>
+                        </div>
+                      )}
+                      {count > 0 && (
+                        <div
+                          style={{
+                            fontSize: count > 2 ? "2.5em" : "1.5em",
+                            color: "red",
+                            fontWeight: "bold",
+                          }}
+                        >
+                          {count > 2 ? count : "❌ ".repeat(count).trim()}
+                        </div>
+                      )}
+                    </div>
+                  );
+                },
+              },
+            }}
+          />
+        )}
+      </div>
+
+
 
       <button
         onClick={handlePrevMonth}
@@ -351,11 +499,11 @@ export const Calendario = () => {
         </ul>
       </div>
       <button
-          onClick={handleUpdatePayments}
-          className="btn btn-primary"
-        >
-          Update Date Ads
-        </button>
+        onClick={handleUpdatePayments}
+        className="btn btn-primary overlay-button"
+      >
+        Update Date Ads
+      </button>
     </div>
   );
 };

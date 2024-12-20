@@ -65,3 +65,23 @@ body {
   opacity: 0.65;
   cursor: not-allowed;
 }
+/* styles.css */
+
+.calendar-container {
+    display: flex;
+    flex-direction: row; /* Alinea los elementos en fila horizontal */
+    justify-content: center; /* Centra los calendarios horizontalmente */
+    align-items: flex-start; /* Alinea los calendarios al inicio verticalmente */
+    gap: 20px; /* Espacio entre los calendarios */
+    width: 100%; /* Asegura que el contenedor ocupe todo el ancho disponible */
+    padding: 20px; /* Espacio interno */
+    box-sizing: border-box; /* Incluye padding en el ancho total */
+  }
+  
+
+  .overlay-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 1000; /* Asegúrate de que el z-index sea lo suficientemente alto */
+  }
