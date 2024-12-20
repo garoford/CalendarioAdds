@@ -276,8 +276,14 @@ export const Calendario = () => {
                     </div>
                   )}
                   {count > 0 && (
-                    <div style={{ fontSize: "0.8em" }}>
-                      Ads selected: {count}
+                    <div
+                      style={{
+                        fontSize: "2em",
+                        color: "red",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      {"❌ ".repeat(count).trim()}
                     </div>
                   )}
                 </div>
@@ -315,9 +321,17 @@ export const Calendario = () => {
         </h3>
 
         <ul>
-          {formatDates(datesCount).map((dateStr, index) => (
-            <li key={index}>{dateStr}</li>
-          ))}
+          {formatDates(datesCount).map((dateStr, index) => {
+            const dayName = moment(dateStr).format("dddd");
+            return (
+              <li key={index}>
+                <span style={{ color: "blue", fontWeight: "bold" }}>
+                  Ad {index + 1}:
+                </span>{" "}
+                {dateStr} - {dayName}
+              </li>
+            );
+          })}
         </ul>
       </div>
       <button onClick={handleUpdatePayments}>Update Date Ads</button>
