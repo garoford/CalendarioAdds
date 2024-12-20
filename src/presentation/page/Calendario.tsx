@@ -4,8 +4,8 @@ import "react-big-calendar/lib/css/react-big-calendar.css";
 import { useParams } from "react-router";
 import { Payments } from "../../use-case/payments";
 import { useState, useEffect, useMemo } from "react";
-import { IEvent } from "../../domain/event.type";
-import 'font-awesome/css/font-awesome.min.css';
+
+import "font-awesome/css/font-awesome.min.css";
 
 const localizer = momentLocalizer(moment);
 
@@ -18,22 +18,39 @@ export const Calendario = () => {
   const [maxSelections, setMaxSelections] = useState<number>(0);
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
-  const [datesCount, setDatesCount] = useState<{ [dateStr: string]: number }>({});
+  const [datesCount, setDatesCount] = useState<{ [dateStr: string]: number }>(
+    {}
+  );
   const [viewDate, setViewDate] = useState<Date | null>(null);
+
+  // Aquí guardamos las fechas existentes (avisos) que vienen de getCalendario
+  const [existingDates, setExistingDates] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const getDate = async () => {
       if (!id) return;
       const data = await Payments.getPayments(id);
 
-      // Ajustamos las fechas para que empiecen a medianoche local
+      // Ajustamos las fechas a medianoche
       const startD = new Date(`${data.calendario.dateStart}T00:00:00`);
       const endD = new Date(`${data.calendario.dateEnd}T00:00:00`);
 
       setStartDate(startD);
       setEndDate(endD);
       setMaxSelections(data.contador);
-      setViewDate(startD); 
+      setViewDate(startD);
+
+      // Procesamos getCalendario para extraer las fechas ya existentes
+      // Suponemos que cada elemento de getCalendario tiene 'date_ads'
+      const existing = new Set<string>();
+      data.getCalendario.forEach((item: { date_ads: string }) => {
+        // Normalizamos la fecha a formato YYYY-MM-DD
+        const dateStr = moment(item.date_ads, "YYYY-MM-DD").format(
+          "YYYY-MM-DD"
+        );
+        existing.add(dateStr);
+      });
+      setExistingDates(existing);
     };
 
     getDate();
@@ -44,26 +61,8 @@ export const Calendario = () => {
     d1.getMonth() === d2.getMonth() &&
     d1.getDate() === d2.getDate();
 
-  const getDateKey = (date: Date) => moment(date).startOf('day').format("YYYY-MM-DD");
-
-  const events: IEvent[] = useMemo(() => {
-    const evts: IEvent[] = [];
-    for (const dateStr in datesCount) {
-      const count = datesCount[dateStr];
-      if (count > 0) {
-        const [year, month, day] = dateStr.split("-").map(Number);
-        const parsedDate = new Date(year, month - 1, day);
-        for (let i = 0; i < count; i++) {
-          evts.push({
-            title: "Selected Date",
-            start: parsedDate,
-            end: parsedDate,
-          });
-        }
-      }
-    }
-    return evts;
-  }, [datesCount]);
+  const getDateKey = (date: Date) =>
+    moment(date).startOf("day").format("YYYY-MM-DD");
 
   const totalSelections = useMemo(() => {
     return Object.values(datesCount).reduce((sum, val) => sum + val, 0);
@@ -72,12 +71,12 @@ export const Calendario = () => {
   const handleAddSelection = (date: Date) => {
     if (!startDate || !endDate) return;
 
-    const startDateMinusTwo = moment(startDate).subtract(2, 'days').toDate();
+    const startDateMinusTwo = moment(startDate).subtract(2, "days").toDate();
     if (date < startDateMinusTwo || date > endDate) return;
 
-    // Start Date y End Date siguen sin permitir selección si son EndDate o fuera de rango, pero sí StartDate ahora.
-    if ((endDate && sameDay(date, endDate))) {
-      return; 
+    // Si es EndDate, no permitimos selección
+    if (endDate && sameDay(date, endDate)) {
+      return;
     }
 
     if (totalSelections >= maxSelections) {
@@ -86,9 +85,9 @@ export const Calendario = () => {
     }
 
     const dateStr = getDateKey(date);
-    setDatesCount(prev => ({
+    setDatesCount((prev) => ({
       ...prev,
-      [dateStr]: (prev[dateStr] || 0) + 1
+      [dateStr]: (prev[dateStr] || 0) + 1,
     }));
   };
 
@@ -96,9 +95,9 @@ export const Calendario = () => {
     const dateStr = getDateKey(date);
     const currentCount = datesCount[dateStr] || 0;
     if (currentCount > 0) {
-      setDatesCount(prev => ({
+      setDatesCount((prev) => ({
         ...prev,
-        [dateStr]: currentCount - 1
+        [dateStr]: currentCount - 1,
       }));
     }
   };
@@ -115,77 +114,109 @@ export const Calendario = () => {
     }
 
     const sortedDates = [...allDates].sort((a, b) => a.getTime() - b.getTime());
-    return sortedDates.map(date => moment(date).format("YYYY-MM-DD"));
+    return sortedDates.map((date) => moment(date).format("YYYY-MM-DD"));
   };
 
   const handleUpdatePayments = async () => {
     if (!id) return;
+
+    const remaining = maxSelections - totalSelections;
+
+    if (remaining < maxSelections) {
+      const confirmed = window.confirm(
+        "Hay menos fechas que avisos, ¿seguro que quieres actualizar las fechas?"
+      );
+      if (!confirmed) return;
+    } else if (remaining === maxSelections) {
+      const confirmed = window.confirm(
+        "¿Estás seguro de actualizar las fechas?"
+      );
+      if (!confirmed) return;
+    }
+
     const formattedDates = formatDates(datesCount);
     const data = await Payments.updatePayments(id, formattedDates);
     console.log(data);
     alert("Fechas actualizadas con éxito!");
+    window.location.reload(); // Recarga la página
   };
 
   if (!viewDate || !startDate || !endDate) {
     return <div>Cargando...</div>;
   }
 
-  const startDateMinusTwo = moment(startDate).subtract(2, 'days').toDate();
+  const startDateMinusTwo = moment(startDate).subtract(2, "days").toDate();
 
+  // dayPropGetter: además de la lógica actual, si la fecha está en existingDates
+  // y no es start/end/outOfRange, la pintamos de celeste (#e0f7fa).
   const dayPropGetter = (date: Date) => {
-    const isStart = sameDay(date, startDate);
-    const isEnd = sameDay(date, endDate);
-    const outOfRange = date < startDateMinusTwo || date > endDate;
+    const isStart = sameDay(date, startDate!);
+    const isEnd = sameDay(date, endDate!);
+    const outOfRange = date < startDateMinusTwo || date > endDate!;
+    const dateKey = getDateKey(date);
+    const isExisting = existingDates.has(dateKey);
 
     let backgroundColor = "white";
 
-    if (isStart || isEnd) {
+    if (isEnd) {
+      // Prioridad 1: Start/End Date en rojo
       backgroundColor = "red";
+    } else if (isStart) {
+      // Prioridad 3: Fecha existente en celeste
+      backgroundColor = "green";
+    } else if (isExisting) {
+      // Prioridad 3: Fecha existente en celeste
+      backgroundColor = "#e0f7fa";
     } else if (outOfRange) {
+      // Prioridad 2: Fuera de rango en gris
       backgroundColor = "#dddddd";
     }
+
+    // Si no se cumple ninguna de las condiciones anteriores, queda en blanco (white)
 
     return { style: { backgroundColor } };
   };
 
   const handlePrevMonth = () => {
     if (viewDate) {
-      const prevMonth = moment(viewDate).subtract(1, 'month').toDate();
+      const prevMonth = moment(viewDate).subtract(1, "month").toDate();
       setViewDate(prevMonth);
     }
   };
 
   const handleNextMonth = () => {
     if (viewDate) {
-      const nextMonth = moment(viewDate).add(1, 'month').toDate();
+      const nextMonth = moment(viewDate).add(1, "month").toDate();
       setViewDate(nextMonth);
     }
   };
 
+  const remaining = totalSelections;
+
   const buttonStyle: IMyStyle = {
-    position: 'absolute',
-    top: '300px',
-    width: '50px',
-    height: '50px',
-    borderRadius: '50%',
-    backgroundColor: 'white',
-    border: '2px solid #333',
-    fontWeight: 'bold',
-    cursor: 'pointer',
+    position: "absolute",
+    top: "300px",
+    width: "50px",
+    height: "50px",
+    borderRadius: "50%",
+    backgroundColor: "white",
+    border: "2px solid #333",
+    fontWeight: "bold",
+    cursor: "pointer",
     zIndex: 999,
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    fontSize: '20px',
-    boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
-    transition: 'all 0.3s ease',
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    fontSize: "20px",
+    boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
+    transition: "all 0.3s ease",
   };
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div style={{ position: "relative" }}>
       <Calendar
         localizer={localizer}
-        events={events}
+        events={[]}
         startAccessor="start"
         endAccessor="end"
         style={{ height: 500 }}
@@ -207,14 +238,14 @@ export const Calendario = () => {
 
               if (isStart) {
                 textColor = "white";
-                content = "Start Date";
+                content = `Start Date - ${label}`;
               } else if (isEnd) {
                 textColor = "white";
-                content = "End Date";
+                content = `End Date - ${label}`;
               }
 
-              // Ahora permitimos selección también en StartDate
-              const canSelect = !isEnd && !outOfRange; 
+              // Permitimos selección en StartDate y demás fechas no fuera de rango ni endDate
+              const canSelect = !isEnd && !outOfRange;
 
               const style: IMyStyle = {
                 display: "flex",
@@ -223,15 +254,20 @@ export const Calendario = () => {
                 alignItems: "center",
                 height: "100%",
                 fontWeight: "bold",
-                color: textColor
+                color: textColor,
               };
 
               return (
                 <div style={style}>
                   {content}
                   {canSelect && (
-                    <div style={{ display: "flex", gap: "5px", marginTop: "5px" }}>
-                      <button onClick={() => handleRemoveSelection(date)} disabled={count === 0}>
+                    <div
+                      style={{ display: "flex", gap: "5px", marginTop: "5px" }}
+                    >
+                      <button
+                        onClick={() => handleRemoveSelection(date)}
+                        disabled={count === 0}
+                      >
                         –
                       </button>
                       <button onClick={() => handleAddSelection(date)}>
@@ -239,40 +275,52 @@ export const Calendario = () => {
                       </button>
                     </div>
                   )}
+                  {count > 0 && (
+                    <div style={{ fontSize: "0.8em" }}>
+                      Ads selected: {count}
+                    </div>
+                  )}
                 </div>
               );
-            }
-          }
+            },
+          },
         }}
       />
 
       <button
         onClick={handlePrevMonth}
-        style={{ ...buttonStyle, left: '10px' }}
-        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f0f0f0')}
-        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'white')}
+        style={{ ...buttonStyle, left: "10px" }}
+        onMouseEnter={(e) =>
+          (e.currentTarget.style.backgroundColor = "#f0f0f0")
+        }
+        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "white")}
       >
         <i className="fa fa-chevron-left"></i>
       </button>
 
       <button
         onClick={handleNextMonth}
-        style={{ ...buttonStyle, right: '10px' }}
-        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f0f0f0')}
-        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'white')}
+        style={{ ...buttonStyle, right: "10px" }}
+        onMouseEnter={(e) =>
+          (e.currentTarget.style.backgroundColor = "#f0f0f0")
+        }
+        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "white")}
       >
         <i className="fa fa-chevron-right"></i>
       </button>
 
-      <div style={{ marginTop: '20px' }}>
-        <h3>Fechas seleccionadas:</h3>
+      <div style={{ marginTop: "20px" }}>
+        <h3>
+          Haz seleccionado {remaining} de {maxSelections} avisos:{" "}
+        </h3>
+
         <ul>
           {formatDates(datesCount).map((dateStr, index) => (
             <li key={index}>{dateStr}</li>
           ))}
         </ul>
       </div>
-      <button onClick={handleUpdatePayments}>Actualizar Fechas</button>
+      <button onClick={handleUpdatePayments}>Update Date Ads</button>
     </div>
   );
 };
