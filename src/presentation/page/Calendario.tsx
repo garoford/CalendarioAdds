@@ -1,3 +1,4 @@
+
 import { Calendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
@@ -13,7 +14,7 @@ interface IMyStyle {
 }
 
 export const Calendario = () => {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const [maxSelections, setMaxSelections] = useState<number>(0);
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
@@ -22,7 +23,8 @@ export const Calendario = () => {
 
   useEffect(() => {
     const getDate = async () => {
-      const data = await Payments.getPayments(id!);
+      if (!id) return;
+      const data = await Payments.getPayments(id);
       const startD = new Date(data.calendario.dateStart);
       const endD = new Date(data.calendario.dateEnd);
 
@@ -40,9 +42,7 @@ export const Calendario = () => {
     d1.getMonth() === d2.getMonth() &&
     d1.getDate() === d2.getDate();
 
-  const getDateKey = (date: Date) => {
-    return moment(date).startOf('day').format("YYYY-MM-DD");
-  };
+  const getDateKey = (date: Date) => moment(date).startOf('day').format("YYYY-MM-DD");
 
   const events: IEvent[] = useMemo(() => {
     const evts: IEvent[] = [];
@@ -68,15 +68,11 @@ export const Calendario = () => {
   }, [datesCount]);
 
   const handleAddSelection = (date: Date) => {
-    if (!startDate || !endDate) return; // Aseguramos que existan startDate/endDate
+    if (!startDate || !endDate) return;
 
     const startDateMinusTwo = moment(startDate).subtract(2, 'days').toDate();
-    // Verificar si está dentro del rango permitido
-    if (date < startDateMinusTwo || date > endDate) {
-      return; // No se puede seleccionar fuera de rango
-    }
+    if (date < startDateMinusTwo || date > endDate) return;
 
-    // Verificar si es StartDate o EndDate
     if ((startDate && sameDay(date, startDate)) || (endDate && sameDay(date, endDate))) {
       return; 
     }
@@ -120,8 +116,9 @@ export const Calendario = () => {
   };
 
   const handleUpdatePayments = async () => {
+    if (!id) return;
     const formattedDates = formatDates(datesCount);
-    const data = await Payments.updatePayments(id!, formattedDates);
+    const data = await Payments.updatePayments(id, formattedDates);
     console.log(data);
     alert("Fechas actualizadas con éxito!");
   };
@@ -132,26 +129,24 @@ export const Calendario = () => {
 
   const startDateMinusTwo = moment(startDate).subtract(2, 'days').toDate();
 
-  // dayPropGetter para el fondo
+  // dayPropGetter: 
+  // - Start/End date: rojo
+  // - Fuera de rango: gris
+  // - Resto: blanco
   const dayPropGetter = (date: Date) => {
     const isStart = sameDay(date, startDate);
     const isEnd = sameDay(date, endDate);
-    const isCurrentMonth = 
-      date.getMonth() === viewDate.getMonth() && date.getFullYear() === viewDate.getFullYear();
-
-    // Fechas fuera de rango: antes de (startDate-2) o después de endDate
     const outOfRange = date < startDateMinusTwo || date > endDate;
 
     let backgroundColor = "white";
+
     if (isStart || isEnd) {
       backgroundColor = "red";
-    } else if (!isCurrentMonth || outOfRange) {
-      backgroundColor = "#dddddd"; 
+    } else if (outOfRange) {
+      backgroundColor = "#dddddd";
     }
 
-    return {
-      style: { backgroundColor }
-    };
+    return { style: { backgroundColor } };
   };
 
   return (
@@ -174,23 +169,18 @@ export const Calendario = () => {
               const count = datesCount[dateStr] || 0;
               const isStart = sameDay(date, startDate);
               const isEnd = sameDay(date, endDate);
-              const isCurrentMonth = 
-                date.getMonth() === viewDate.getMonth() && date.getFullYear() === viewDate.getFullYear();
-              
               const outOfRange = date < startDateMinusTwo || date > endDate;
 
               let textColor = "black";
               let content = label;
 
+              // Start/End date con texto blanco
               if (isStart) {
                 textColor = "white";
                 content = "Start Date";
               } else if (isEnd) {
                 textColor = "white";
                 content = "End Date";
-              } else if (!isCurrentMonth || outOfRange) {
-                // Mismo tratamiento que fuera de mes
-                textColor = "#555555";
               }
 
               const style: IMyStyle = {
@@ -203,8 +193,8 @@ export const Calendario = () => {
                 color: textColor
               };
 
-              // Si la fecha es seleccionable (no outOfRange, no start/end y es del mes actual)
-              const canSelect = isCurrentMonth && !isStart && !isEnd && !outOfRange;
+              // canSelect = true solo si no es start/end ni está fuera de rango
+              const canSelect = !isStart && !isEnd && !outOfRange;
 
               return (
                 <div style={style}>
