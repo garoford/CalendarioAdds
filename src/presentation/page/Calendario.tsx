@@ -227,7 +227,7 @@ export const Calendario = () => {
 
   return (
     <div style={{ position: "relative" }}>
-      <Calendar
+      <Calendar // para poder ver varias veces el mes, sacar de aqui el codigo
         localizer={localizer}
         events={[]}
         startAccessor="start"
@@ -306,6 +306,8 @@ export const Calendario = () => {
           },
         }}
       />
+
+      
 
       <button
         onClick={handlePrevMonth}
