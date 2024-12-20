@@ -4,6 +4,7 @@ import "react-big-calendar/lib/css/react-big-calendar.css";
 import { useParams } from "react-router";
 import { Payments } from "../../use-case/payments";
 import { useState, useEffect, useMemo } from "react";
+import ClipLoader from "react-spinners/ClipLoader";
 
 
 
@@ -155,7 +156,11 @@ export const Calendario = () => {
   };
 
   if (!viewDate || !startDate || !endDate) {
-    return <div>Cargando...</div>;
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <ClipLoader size={50} color={"#123abc"} loading={true} />
+      </div>
+    );
   }
 
   const startDateMinusTwo = moment(startDate).subtract(1, "days").toDate();
