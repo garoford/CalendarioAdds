@@ -197,7 +197,7 @@ export const Calendario = () => {
       backgroundColor = "#e6e6e6";
       textColor = "black";
     } else if (isExisting) {
-      backgroundColor = "#e6e6e6";
+      backgroundColor = "";
       textColor = "black";
     } else if (outOfRange) {
       backgroundColor = "#e6e6e6";
