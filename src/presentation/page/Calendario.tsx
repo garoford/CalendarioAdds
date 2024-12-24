@@ -173,20 +173,20 @@ export const Calendario = () => {
 
   // dayPropGetter: además de la lógica actual, si la fecha está en existingDates
   // y no es start/end/outOfRange, la pintamos de celeste (#e0f7fa).
-  
+
 
   const getDayPropGetter = (referenceMonth: number) => (date: Date) => {
     const isStart = sameDay(date, startDate!);
     const isEnd = sameDay(date, endDate!);
     const outOfRange = date < startDateMinusTwo || date > endDate!;
-    const dateKey = getDateKey(date);
-    const isExisting = existingDates.has(dateKey);
+    // const dateKey = getDateKey(date);
+    // const isExisting = existingDates.has(dateKey);
     const isOutOfCurrentMonth = date.getMonth() !== referenceMonth;
     const isWeekend = date.getDay() === 0 || date.getDay() === 6; // 0 es domingo y 6 es sábado
-  
-    let backgroundColor = "white"; // En caso de que Julio se arrepienta le colocamos White
+
+    let backgroundColor = ""; // En caso de que Julio se arrepienta le colocamos White
     let textColor = "black";
-  
+
     if (isEnd) {
       backgroundColor = "red";
       textColor = "white";
@@ -196,14 +196,11 @@ export const Calendario = () => {
     } else if (isOutOfCurrentMonth || isWeekend) {
       backgroundColor = "#e6e6e6";
       textColor = "black";
-    } else if (isExisting) {
-      backgroundColor = "";
-      textColor = "black";
     } else if (outOfRange) {
       backgroundColor = "#e6e6e6";
       textColor = "black";
     }
-  
+
     return { style: { backgroundColor, color: textColor } };
   };
 
@@ -269,6 +266,9 @@ export const Calendario = () => {
                 const currentMonth = viewDate.getMonth();
                 const isOutOfCurrentMonth = date.getMonth() !== currentMonth;
                 const isWeekend = date.getDay() === 0 || date.getDay() === 6; // 0 es domingo y 6 es sábado
+                const dateKey = getDateKey(date);
+                const isExisting = existingDates.has(dateKey);
+
 
 
 
@@ -281,6 +281,18 @@ export const Calendario = () => {
                 } else if (isEnd) {
                   textColor = "white";
                   content = `ED - ${label}`;
+                } else if (isOutOfCurrentMonth) {
+                  textColor = "#e6e6e6";
+                  content = `${label}`;
+                } else if (isExisting) {
+                  textColor = "gray";
+                  content = `${label} 🗓️`;
+                } else if (outOfRange) {
+                  textColor = "#e6e6e6";
+                  content = `${label}`;
+                } else if (isWeekend) {
+                  textColor = "#e6e6e6";
+                  content = `${label}`;
                 }
 
                 // Permitimos selección en StartDate y demás fechas no fuera de rango ni endDate, excluyendo días fuera del mes actual y fines de semana
@@ -350,6 +362,9 @@ export const Calendario = () => {
                 const currentMonth = moment(viewDate).add(1, 'month').toDate().getMonth();
                 const isOutOfCurrentMonth = date.getMonth() !== currentMonth;
                 const isWeekend = date.getDay() === 0 || date.getDay() === 6; // 0 es domingo y 6 es sábado
+                const dateKey = getDateKey(date);
+                const isExisting = existingDates.has(dateKey);
+
 
 
 
@@ -362,6 +377,18 @@ export const Calendario = () => {
                 } else if (isEnd) {
                   textColor = "white";
                   content = `ED - ${label}`;
+                } else if (isOutOfCurrentMonth) {
+                  textColor = "#e6e6e6";
+                  content = `${label}`;
+                } else if (isExisting) {
+                  textColor = "gray";
+                  content = `${label} 🗓️`;
+                } else if (outOfRange) {
+                  textColor = "#e6e6e6";
+                  content = `${label}`;
+                } else if (isWeekend) {
+                  textColor = "#e6e6e6";
+                  content = `${label}`;
                 }
 
                 // Permitimos selección en StartDate y demás fechas no fuera de rango ni endDate, excluyendo días fuera del mes actual y fines de semana
@@ -432,6 +459,9 @@ export const Calendario = () => {
                   const currentMonth = moment(viewDate).add(2, 'month').toDate().getMonth();
                   const isOutOfCurrentMonth = date.getMonth() !== currentMonth;
                   const isWeekend = date.getDay() === 0 || date.getDay() === 6; // 0 es domingo y 6 es sábado
+                  const dateKey = getDateKey(date);
+                  const isExisting = existingDates.has(dateKey);
+
 
 
 
@@ -444,6 +474,18 @@ export const Calendario = () => {
                   } else if (isEnd) {
                     textColor = "white";
                     content = `ED - ${label}`;
+                  } else if (isOutOfCurrentMonth) {
+                    textColor = "#e6e6e6";
+                    content = `${label}`;
+                  } else if (isExisting) {
+                    textColor = "gray";
+                    content = `${label} 🗓️`;
+                  } else if (outOfRange) {
+                    textColor = "#e6e6e6";
+                    content = `${label}`;
+                  } else if (isWeekend) {
+                    textColor = "#e6e6e6";
+                    content = `${label}`;
                   }
 
                   // Permitimos selección en StartDate y demás fechas no fuera de rango ni endDate, excluyendo días fuera del mes actual y fines de semana
