@@ -21,6 +21,12 @@ const CustomToolbar = ({ date = new Date() }) => {
   );
 };
 
+moment.updateLocale("en", {
+  week: {
+    dow: 1, // 0 es domingo, 1 es lunes
+  },
+});
+
 const localizer = momentLocalizer(moment);
 
 interface IMyStyle {
@@ -167,32 +173,38 @@ export const Calendario = () => {
 
   // dayPropGetter: además de la lógica actual, si la fecha está en existingDates
   // y no es start/end/outOfRange, la pintamos de celeste (#e0f7fa).
-  const dayPropGetter = (date: Date) => {
+  
+
+  const getDayPropGetter = (referenceMonth: number) => (date: Date) => {
     const isStart = sameDay(date, startDate!);
     const isEnd = sameDay(date, endDate!);
     const outOfRange = date < startDateMinusTwo || date > endDate!;
     const dateKey = getDateKey(date);
     const isExisting = existingDates.has(dateKey);
-
-    let backgroundColor = ""; // En caso de que Julio se arrepienta le colocamos White
-
+    const isOutOfCurrentMonth = date.getMonth() !== referenceMonth;
+    const isWeekend = date.getDay() === 0 || date.getDay() === 6; // 0 es domingo y 6 es sábado
+  
+    let backgroundColor = "white"; // En caso de que Julio se arrepienta le colocamos White
+    let textColor = "black";
+  
     if (isEnd) {
-      // Prioridad 1: Start/End Date en rojo
       backgroundColor = "red";
+      textColor = "white";
     } else if (isStart) {
-      // Prioridad 2: Fecha inicial en verde
       backgroundColor = "green";
+      textColor = "white";
+    } else if (isOutOfCurrentMonth || isWeekend) {
+      backgroundColor = "#dddddd";
+      textColor = "black";
     } else if (isExisting) {
-      // Prioridad 3: Fecha existente en celeste
       backgroundColor = "#e0f7fa";
+      textColor = "black";
     } else if (outOfRange) {
-      // Prioridad 4: Fuera de rango en gris
-      backgroundColor = "#e6e6e6";
+      backgroundColor = "#dddddd";
+      textColor = "black";
     }
-
-    // Si no se cumple ninguna de las condiciones anteriores, queda en blanco (white)
-
-    return { style: { backgroundColor } };
+  
+    return { style: { backgroundColor, color: textColor } };
   };
 
   const dayDifference = moment(endDate).diff(moment(startDate), 'days');
@@ -244,7 +256,7 @@ export const Calendario = () => {
           date={viewDate}
           toolbar={true}
           view="month"
-          dayPropGetter={dayPropGetter}
+          dayPropGetter={getDayPropGetter(viewDate.getMonth())}
           components={{
             toolbar: CustomToolbar,
             month: {
@@ -254,6 +266,11 @@ export const Calendario = () => {
                 const isStart = sameDay(date, startDate);
                 const isEnd = sameDay(date, endDate);
                 const outOfRange = date < startDateMinusTwo || date > endDate;
+                const currentMonth = viewDate.getMonth();
+                const isOutOfCurrentMonth = date.getMonth() !== currentMonth;
+                const isWeekend = date.getDay() === 0 || date.getDay() === 6; // 0 es domingo y 6 es sábado
+
+
 
                 let textColor = "black";
                 let content = label;
@@ -266,8 +283,8 @@ export const Calendario = () => {
                   content = `ED - ${label}`;
                 }
 
-                // Permitimos selección en StartDate y demás fechas no fuera de rango ni endDate
-                const canSelect = !isEnd && !outOfRange;
+                // Permitimos selección en StartDate y demás fechas no fuera de rango ni endDate, excluyendo días fuera del mes actual y fines de semana
+                const canSelect = !isEnd && !outOfRange && !isOutOfCurrentMonth && !isWeekend;
 
                 const style: IMyStyle = {
                   display: "flex",
@@ -283,25 +300,27 @@ export const Calendario = () => {
                   <div style={style}>
                     {content}
                     {canSelect && (
-                      <div style={{ display: "flex", gap: "5px", marginTop: "5px" }}>
-                        <button onClick={() => handleRemoveSelection(date)} disabled={count === 0}>
-                          –
-                        </button>
-                        <button onClick={() => handleAddSelection(date)}>
-                          +
-                        </button>
-                      </div>
-                    )}
-                    {count > 0 && (
-                      <div
-                        style={{
-                          fontSize: count > 2 ? "2.5em" : "1.5em",
-                          color: "red",
-                          fontWeight: "bold",
-                        }}
-                      >
-                        {count > 2 ? count : "❌ ".repeat(count).trim()}
-                      </div>
+                      <>
+                        <div style={{ display: "flex", gap: "5px", marginTop: "5px" }}>
+                          <button onClick={() => handleRemoveSelection(date)} disabled={count === 0}>
+                            –
+                          </button>
+                          <button onClick={() => handleAddSelection(date)}>
+                            +
+                          </button>
+                        </div>
+                        {count > 0 && (
+                          <div
+                            style={{
+                              fontSize: count > 2 ? "2.5em" : "1.5em",
+                              color: "red",
+                              fontWeight: "bold",
+                            }}
+                          >
+                            {count > 2 ? count : "✔️ ".repeat(count).trim()}
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 );
@@ -318,7 +337,7 @@ export const Calendario = () => {
           date={moment(viewDate).add(1, 'month').toDate()}
           toolbar={true}
           view="month"
-          dayPropGetter={dayPropGetter}
+          dayPropGetter={getDayPropGetter(moment(viewDate).add(1, 'month').toDate().getMonth())}
           components={{
             toolbar: CustomToolbar,
             month: {
@@ -328,6 +347,11 @@ export const Calendario = () => {
                 const isStart = sameDay(date, startDate);
                 const isEnd = sameDay(date, endDate);
                 const outOfRange = date < startDateMinusTwo || date > endDate;
+                const currentMonth = moment(viewDate).add(1, 'month').toDate().getMonth();
+                const isOutOfCurrentMonth = date.getMonth() !== currentMonth;
+                const isWeekend = date.getDay() === 0 || date.getDay() === 6; // 0 es domingo y 6 es sábado
+
+
 
                 let textColor = "black";
                 let content = label;
@@ -340,8 +364,8 @@ export const Calendario = () => {
                   content = `ED - ${label}`;
                 }
 
-                // Permitimos selección en StartDate y demás fechas no fuera de rango ni endDate
-                const canSelect = !isEnd && !outOfRange;
+                // Permitimos selección en StartDate y demás fechas no fuera de rango ni endDate, excluyendo días fuera del mes actual y fines de semana
+                const canSelect = !isEnd && !outOfRange && !isOutOfCurrentMonth && !isWeekend;
 
                 const style: IMyStyle = {
                   display: "flex",
@@ -357,25 +381,27 @@ export const Calendario = () => {
                   <div style={style}>
                     {content}
                     {canSelect && (
-                      <div style={{ display: "flex", gap: "5px", marginTop: "5px" }}>
-                        <button onClick={() => handleRemoveSelection(date)} disabled={count === 0}>
-                          –
-                        </button>
-                        <button onClick={() => handleAddSelection(date)}>
-                          +
-                        </button>
-                      </div>
-                    )}
-                    {count > 0 && (
-                      <div
-                        style={{
-                          fontSize: count > 2 ? "2.5em" : "1.5em",
-                          color: "red",
-                          fontWeight: "bold",
-                        }}
-                      >
-                        {count > 2 ? count : "❌ ".repeat(count).trim()}
-                      </div>
+                      <>
+                        <div style={{ display: "flex", gap: "5px", marginTop: "5px" }}>
+                          <button onClick={() => handleRemoveSelection(date)} disabled={count === 0}>
+                            –
+                          </button>
+                          <button onClick={() => handleAddSelection(date)}>
+                            +
+                          </button>
+                        </div>
+                        {count > 0 && (
+                          <div
+                            style={{
+                              fontSize: count > 2 ? "2.5em" : "1.5em",
+                              color: "red",
+                              fontWeight: "bold",
+                            }}
+                          >
+                            {count > 2 ? count : "✔️ ".repeat(count).trim()}
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 );
@@ -393,7 +419,7 @@ export const Calendario = () => {
             date={moment(viewDate).add(2, 'month').toDate()}
             toolbar={true}
             view="month"
-            dayPropGetter={dayPropGetter}
+            dayPropGetter={getDayPropGetter(moment(viewDate).add(2, 'month').toDate().getMonth())}
             components={{
               toolbar: CustomToolbar,
               month: {
@@ -403,6 +429,11 @@ export const Calendario = () => {
                   const isStart = sameDay(date, startDate);
                   const isEnd = sameDay(date, endDate);
                   const outOfRange = date < startDateMinusTwo || date > endDate;
+                  const currentMonth = moment(viewDate).add(2, 'month').toDate().getMonth();
+                  const isOutOfCurrentMonth = date.getMonth() !== currentMonth;
+                  const isWeekend = date.getDay() === 0 || date.getDay() === 6; // 0 es domingo y 6 es sábado
+
+
 
                   let textColor = "black";
                   let content = label;
@@ -415,7 +446,8 @@ export const Calendario = () => {
                     content = `ED - ${label}`;
                   }
 
-                  const canSelect = !isEnd && !outOfRange;
+                  // Permitimos selección en StartDate y demás fechas no fuera de rango ni endDate, excluyendo días fuera del mes actual y fines de semana
+                  const canSelect = !isEnd && !outOfRange && !isOutOfCurrentMonth && !isWeekend;
 
                   const style: IMyStyle = {
                     display: "flex",
@@ -431,25 +463,27 @@ export const Calendario = () => {
                     <div style={style}>
                       {content}
                       {canSelect && (
-                        <div style={{ display: "flex", gap: "5px", marginTop: "5px" }}>
-                          <button onClick={() => handleRemoveSelection(date)} disabled={count === 0}>
-                            –
-                          </button>
-                          <button onClick={() => handleAddSelection(date)}>
-                            +
-                          </button>
-                        </div>
-                      )}
-                      {count > 0 && (
-                        <div
-                          style={{
-                            fontSize: count > 2 ? "2.5em" : "1.5em",
-                            color: "red",
-                            fontWeight: "bold",
-                          }}
-                        >
-                          {count > 2 ? count : "❌ ".repeat(count).trim()}
-                        </div>
+                        <>
+                          <div style={{ display: "flex", gap: "5px", marginTop: "5px" }}>
+                            <button onClick={() => handleRemoveSelection(date)} disabled={count === 0}>
+                              –
+                            </button>
+                            <button onClick={() => handleAddSelection(date)}>
+                              +
+                            </button>
+                          </div>
+                          {count > 0 && (
+                            <div
+                              style={{
+                                fontSize: count > 2 ? "2.5em" : "1.5em",
+                                color: "red",
+                                fontWeight: "bold",
+                              }}
+                            >
+                              {count > 2 ? count : "✔️ ".repeat(count).trim()}
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
                   );
