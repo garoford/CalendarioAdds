@@ -194,13 +194,13 @@ export const Calendario = () => {
       backgroundColor = "green";
       textColor = "white";
     } else if (isOutOfCurrentMonth || isWeekend) {
-      backgroundColor = "#dddddd";
+      backgroundColor = "#e6e6e6";
       textColor = "black";
     } else if (isExisting) {
-      backgroundColor = "#e0f7fa";
+      backgroundColor = "#e6e6e6";
       textColor = "black";
     } else if (outOfRange) {
-      backgroundColor = "#dddddd";
+      backgroundColor = "#e6e6e6";
       textColor = "black";
     }
   
