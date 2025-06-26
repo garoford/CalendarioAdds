@@ -182,7 +182,7 @@ export const Calendario = () => {
     // const dateKey = getDateKey(date);
     // const isExisting = existingDates.has(dateKey);
     const isOutOfCurrentMonth = date.getMonth() !== referenceMonth;
-    const isWeekend = date.getDay() === 0 || date.getDay() === 6; // 0 es domingo y 6 es sábado
+    const isWeekend = date.getDay() === 0; // 0 es domingo y 6 es sábado
 
     let backgroundColor = ""; // En caso de que Julio se arrepienta le colocamos White
     let textColor = "black";
@@ -265,7 +265,7 @@ export const Calendario = () => {
                 const outOfRange = date < startDateMinusTwo || date > endDate;
                 const currentMonth = viewDate.getMonth();
                 const isOutOfCurrentMonth = date.getMonth() !== currentMonth;
-                const isWeekend = date.getDay() === 0 || date.getDay() === 6; // 0 es domingo y 6 es sábado
+                const isWeekend = date.getDay() === 0 // 0 es domingo y 6 es sábado
                 const dateKey = getDateKey(date);
                 const isExisting = existingDates.has(dateKey);
 
@@ -361,7 +361,7 @@ export const Calendario = () => {
                 const outOfRange = date < startDateMinusTwo || date > endDate;
                 const currentMonth = moment(viewDate).add(1, 'month').toDate().getMonth();
                 const isOutOfCurrentMonth = date.getMonth() !== currentMonth;
-                const isWeekend = date.getDay() === 0 || date.getDay() === 6; // 0 es domingo y 6 es sábado
+                const isWeekend = date.getDay() === 0; // 0 es domingo y 6 es sábado
                 const dateKey = getDateKey(date);
                 const isExisting = existingDates.has(dateKey);
 
@@ -458,7 +458,7 @@ export const Calendario = () => {
                   const outOfRange = date < startDateMinusTwo || date > endDate;
                   const currentMonth = moment(viewDate).add(2, 'month').toDate().getMonth();
                   const isOutOfCurrentMonth = date.getMonth() !== currentMonth;
-                  const isWeekend = date.getDay() === 0 || date.getDay() === 6; // 0 es domingo y 6 es sábado
+                  const isWeekend = date.getDay() === 0; // 0 es domingo y 6 es sábado
                   const dateKey = getDateKey(date);
                   const isExisting = existingDates.has(dateKey);
 
